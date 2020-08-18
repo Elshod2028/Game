@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<style type="text/css">		
+		canvas {
+  		border: 1px solid white;
+  		background: black;
+ 		}
+
+ 		body {
+      background: black;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+
+	</style>
+</head>
+<body>
+	<canvas id='canvas'></canvas>
+</body>	
+<script type="text/javascript">
+	const cnv = document.querySelector('#canvas');
+	const ctx = cnv.getContext('2d');
+
+	cnv.width = 800;
+	cnv.height = 600;
+
+	ctx.font = '48px monospace';
+
+	let keys = {};
+
+	let isGameOver = false;
+
+	document.addEventListener('keydown', (event) => {
+		keys[event.code] = true;
+	})
+
+	document.addEventListener('keyup', (event) => {
+		keys[event.code] = false;
+	})
+	
+	const gameOver = () => {
+		ctx.fillStyle = '#151515';
+		ctx.fillRect(0, 0, cnv.width, cnv.height);
+
+		ctx.fillStyle = 'white';
+		ctx.fillText('Game Over', 260, 200)
+		ctx.fillText('Score: ' + player.score, 260, 300)
+	
+	}
+
+	const collides = (a, b) => {
+		
+		return a.x < b.x + b.width
+			&& a.x + a.width > b.x
+			&& a.y < b.y + b.height
+			&& a.y + a.height > b.y
+	}
+
+	const randomCoordinate =
+	(border) =>  parseInt(Math.random() * (border - 20) + 10);
+		
+	const apple = {
+		x: randomCoordinate(cnv.width),
+		y: randomCoordinate(cnv.height),
+		width: 7.5,
+		height: 7.5,
+		radius: 5,
+		
+		collect: function(player) {
+			if(collides(player, apple)) {
+				this.x = parseInt(Math.random() * (cnv.width - 20) + 10),
+				this.y = parseInt(Math.random() * (cnv.height - 20) + 10)
+				player.score++ ;
+				player.length ++ ;
+				player.speed += 0.5;
+
+			}
+		
+			ctx.fillStyle = 'red';
+			ctx.beginPath();
+			ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+
+			ctx.fill()
+		
+		}
+	}
+	
+	const player = {
+		x: 0,
+		y: 0,
+		width: 20,
+		height: 20,
+		speed: 0.1,
+		dx: 20,
+		dy: 0,
+		score: 0,
+		segments: [],
+		length: 3,
+		move: function() {
+			if(keys['KeyW']) {
+			this.dx = 0;
+			this.dy = -20;
+			}
+			if(keys['KeyS']) {
+			this.dx = 0;
+			this.dy = 20;
+			}
+			if(keys['KeyD']) {
+			this.dx = 20 ;
+			this.dy = 0 ;
+			}
+			if(keys['KeyA']) {
+			this.dx = -20;
+			this.dy = 0 ;
+			}
+			
+			this.x += this.dx;
+			this.y += this.dy;
+
+			this.segments.unshift({x: this.x,
+			                       y: this.y,
+			                       width: this.width,
+			                       height: this.height,});
+
+			if(this.segments.length > this.length) {
+				this.segments.pop();
+				}
+			ctx.fillStyle = 'white'
+			ctx.fillText('Score: ' + this.score, 10, 50)
+		
+			ctx.fillStyle = 'darkgreen'
+		
+		for (let i = 1; i < this.segments.length; i++){
+			ctx.fillRect(this.segments[i].x,
+						this.segments[i].y,
+						this.segments[i].width - 1,
+						this.segments[i].height - 1,
+						)
+			if(collides(this.segments[i], player)
+				&& !isGameOver) isGameOver = true
+		}
+		},
+		teleport: function () {
+			if (player.x > cnv.width) {
+				player.x = 0
+				
+			}
+			else if (player.x < 0){
+				player.x = cnv.width
+			}
+			if(player.y > cnv.height) {
+				player.y = 0
+			}
+			else if (player.y < 0){
+				player.y = cnv.height
+			}
+		}
+
+	}
+	
+	let frame = 0	
+	const mainloop = () => {
+		requestAnimationFrame( mainloop);
+		if(!isGameOver){
+		frame += 1;
+		if (frame < 4) return;
+		frame = 0;
+		ctx.clearRect(0, 0, cnv.width, cnv.height)
+		player.move();
+		apple.collect(player);
+		player.teleport()
+		} else{
+			gameOver();
+		}
+	}
+
+	requestAnimationFrame( mainloop);
+	
+
+  </script>
+</html> 	
